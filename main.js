@@ -1,11 +1,16 @@
 const { app, BrowserWindow } = require('electron')
 
-var exec = require("child_process").exec;
+// var exec = require("child_process").exec;
 
 const createWindow = () => {
     const win = new BrowserWindow({
         width: 400,
-        height: 300
+        height: 300,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+        
     })
 
     win.loadFile('client.html')
@@ -13,15 +18,15 @@ const createWindow = () => {
 
     // exec("node server");
 
-    const cmd = "node server.js"
+    // const cmd = "node server.js"
 
-    exec(cmd, (err, stdout, stderr) => {
-        if (err) {
-            console.log("err", err)
-            return;
-        }
-        console.log(stdout)
-    })
+    // exec(cmd, (err, stdout, stderr) => {
+    //     if (err) {
+    //         console.log("err", err)
+    //         return;
+    //     }
+    //     console.log(stdout)
+    // })
 
 
 

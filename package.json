@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "electron": "^16.0.0",
+    "electron-packager": "^15.4.0",
     "nodemon": "^2.0.15"
   },
   "scripts": {
