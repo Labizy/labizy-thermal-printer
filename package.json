@@ -1,0 +1,25 @@
+{
+  "name": "thermal-printer-app",
+  "version": "1.0.0",
+  "description": "Thermal printer server",
+  "main": "main.js",
+  "author": "Mohamed CISSE mceessay@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dayjs": "^1.10.7",
+    "dotenv": "^8.2.0",
+    "escpos": "^3.0.0-alpha.3",
+    "escpos-usb": "^3.0.0-alpha.2",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "electron": "^16.0.0",
+    "nodemon": "^2.0.15"
+  },
+  "scripts": {
+    "dev": "nodemon server.js",
+    "electron": "electron ."
+  }
+}
