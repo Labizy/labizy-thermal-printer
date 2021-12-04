@@ -21,6 +21,7 @@
   },
   "scripts": {
     "dev": "nodemon server.js",
-    "electron": "electron ."
+    "electron": "electron .",
+    "pack": " electron-packager . printer --platform=win32 --arch=x64 --overwrite"
   }
 }

@@ -5,7 +5,7 @@ escpos.USB = require('escpos-usb')
 
 const device = new escpos.USB();
 const options = {
-  encoding: "GB18030",
+  encoding: "860",
   width: 58
 
 }
@@ -16,12 +16,12 @@ var app = require('express')()
 var http = require('http').Server(app)
 var cors = require('cors');
 const dayjs = require('dayjs');
-app.use(cors())
+app.use(cors({
+  origin: '*',
+}));
 app.use(bodyParser.json())
 
 const port = 3525;
-
-
 
 
 
@@ -42,6 +42,12 @@ const print = (facture) => {
 
 
 
+  const calculateAge = (dateStr) => {
+    const dateNaiss = dayjs(dateStr, "YYYY-MM-DD")
+    const now = dayjs()
+    const years = now.diff(dateNaiss, 'y')
+    return years
+  }
 
 
   //   const facture = JSON.parse(`
@@ -142,6 +148,8 @@ const print = (facture) => {
 
 
 
+  const { analyses, patient, agent_facturation } = facture
+
 
   device.open(
 
@@ -160,7 +168,7 @@ const print = (facture) => {
         .align("LT")
         .style('a')
         .size(0, 0)
-        .text("Siege social : Liberte 6 Extension N 121, Dakar");
+        .text("Siège social : Liberté 6 Extension N 121, Dakar");
 
       printer
         .control("CR")
@@ -193,7 +201,7 @@ const print = (facture) => {
         .align('ct')
         .style('bu')
         .size(1, 1)
-        .text(`Facture N: ${facture.numero_facture}`);
+        .text(`Facture N : ${facture.numero_facture}`);
 
 
 
@@ -204,34 +212,55 @@ const print = (facture) => {
         .align("LT")
         .style('a')
         .size(0, 0)
-        .text(`fait a Dakar le : ${dayjs(facture.created_at).format("D MMM YYYY HH:mm")}`);
+        .text(`fait à Dakar le : ${dayjs(facture.created_at).format("D MMM YYYY HH:mm")}`);
 
-      const { analyses } = facture
+      printer
+        .control("LF")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Prénom et Nom : ${patient.prenom} ${patient.nom}`);
 
 
-      for (let i = 0; i < analyses.length; i++) {
-        const item = analyses[i];
+      printer
+        .control("CR")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Age : ${calculateAge(patient.date_naissance)} an(s)`);
+      printer
+        .control("CR")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Adresse :  ${patient.adresse}`);
 
-        //   {
-        //     "prix": 22000,
-        //     "prix_ipm": 19000,
-        //     "_id": "60d2b0ec23a297d70cfe6ac8",
-        //     "designation": "Transferrine",
-        //     "created_at": "2021-06-23T03:56:27.855Z",
-        //     "updated_at": "2021-06-23T03:58:16.388Z",
-        //     "type": {
-        //         "_id": "60d2a947893ca43ddca9bdb9",
-        //         "designation": "Biochimie",
-        //         "slug": "biochimie",
-        //         "created_at": "2021-06-23T03:23:51.772Z",
-        //         "updated_at": "2021-06-23T03:23:51.772Z",
-        //         "__v": 0
-        //     }
-        // },
+      printer
+        .control("CR")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Téléphone : ${patient.telephone}`);
 
+      printer
+        .control("CR")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Matricule : ${patient.numero_patient}`);
+
+
+        
+        analyses.map(item => {
         printer
           .control("LF")
-          .font('b')
+        printer
+        .font('b')
           .align("LT")
           .style('b')
           .size(0, 0)
@@ -240,29 +269,136 @@ const print = (facture) => {
         printer
           .control("CR")
           .font('b')
-          .align("LT")
           .style('a')
-          .size(0, 0)
-          .text(`Montant a payer: ${item.prix}`);
+          .size(0, 0).tableCustom([
+            { text: "Montant a payer :", align: 'LEFT' },
+            { text: `${item.prix || 0} F`, align: 'RIGHT' }
+          ]);
 
         printer
           .control("CR")
           .font('b')
-          .align("LT")
           .style('a')
-          .size(0, 0)
-          .text(`Montant exoneration: ${item.prix_ipm}`);
-        // printer
-        //   .control("CR")
-        //   .font('b')
-        //   .align("LT")
-        //   .style('a')
-        //   .size(0, 0)
-        //   .text(`Montant paye ${item.designation}`);
+          .size(0, 0).tableCustom([
+            { text: "Montant éxoneration :", align: 'LEFT' },
+            { text: `${item.prix_ipm || 0} F`, align: 'RIGHT' }
+          ]);
+
+
+        printer
+          .control("CR")
+          .font('b')
+          .style('a')
+          .size(0, 0).tableCustom([
+            { text: "Montant avance :", align: 'LEFT' },
+            { text: `${item.montant_avance || 0} F`, align: 'RIGHT' }
+          ]);
+
+
+      });
 
 
 
-      }
+
+
+      // for (let i = 0; i < analyses.length; i++) {
+      //   const item = analyses[i];
+
+      //   //   {
+      //   //     "prix": 22000,
+      //   //     "prix_ipm": 19000,
+      //   //     "_id": "60d2b0ec23a297d70cfe6ac8",
+      //   //     "designation": "Transferrine",
+      //   //     "created_at": "2021-06-23T03:56:27.855Z",
+      //   //     "updated_at": "2021-06-23T03:58:16.388Z",
+      //   //     "type": {
+      //   //         "_id": "60d2a947893ca43ddca9bdb9",
+      //   //         "designation": "Biochimie",
+      //   //         "slug": "biochimie",
+      //   //         "created_at": "2021-06-23T03:23:51.772Z",
+      //   //         "updated_at": "2021-06-23T03:23:51.772Z",
+      //   //         "__v": 0
+      //   //     }
+      //   // },
+
+      //   printer
+      //     .control("LF")
+      //     .font('b')
+      //     .align("LT")
+      //     .style('b')
+      //     .size(0, 0)
+      //     .text(item.designation);
+
+      //   printer
+      //     .control("CR")
+      //     .font('b')
+      //     .align("LT")
+      //     .style('a')
+      //     .size(0, 0)
+      //     .text(`Montant a payer: ${item.prix}`);
+
+      //   printer
+      //     .control("CR")
+      //     .font('b')
+      //     .align("LT")
+      //     .style('a')
+      //     .size(0, 0)
+      //     .text(`Montant éxoneration: ${item.prix_ipm}`);
+      //   // printer
+      //   //   .control("CR")
+      //   //   .font('b')
+      //   //   .align("LT")
+      //   //   .style('a')
+      //   //   .size(0, 0)
+      //   //   .text(`Montant paye ${item.designation}`);
+
+
+
+      // }
+
+
+      printer
+        .control("LF")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Prise en charge : ${facture.prise_en_charge ? 'Oui' : 'Non'}`);
+
+
+
+
+      printer
+        .control("CR")
+        .font('b')
+        .align("LT")
+        .style('b')
+        .size(0, 0)
+        .text(`Agent de facturation: ${agent_facturation ?
+          agent_facturation.firstName + " " + agent_facturation.lastName : ""}`);
+
+
+      printer
+        .control("LF")
+        .control("LF")
+        .font('b')
+        .align("CT")
+        .style('b')
+        .size(1, 1)
+        .text(`Bon rétablissement`);
+
+      printer
+        .control("LF")
+        .control("LF")
+        .font('b')
+        .align("CT")
+        .style('b')
+        .size(1, 1)
+        .text(` `);
+
+
+
+
 
 
       printer.cut()
