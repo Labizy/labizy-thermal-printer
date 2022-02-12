@@ -12,7 +12,8 @@
     "dotenv": "^8.2.0",
     "escpos": "^3.0.0-alpha.3",
     "escpos-usb": "^3.0.0-alpha.2",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "written-number": "^0.11.1"
   },
   "devDependencies": {
     "electron": "^16.0.0",
