@@ -5,15 +5,6 @@ escpos.USB = require('escpos-usb')
 const writtenNumber = require('written-number');
 writtenNumber.defaults.lang = 'fr';
 
-
-const device = new escpos.USB(0x04b8,0x0e28);
-const options = {
-  encoding: "860",
-  width: 58
-
-}
-const printer = new escpos.Printer(device, options)
-
 var bodyParser = require('body-parser')
 var app = require('express')()
 var http = require('http').Server(app)
@@ -27,6 +18,9 @@ app.use(bodyParser.json())
 const port = 3525;
 
 const formatNumber = (val = 0) => val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");  //Intl.NumberFormat().format(parseInt(val))
+
+const size1 = (1 + 1 * 0.5)
+const size2 = (1 + 1 * 0.7)
 
 app.post('/print', (req, res) => {
 
@@ -49,6 +43,16 @@ const logo = path.join(__dirname, "logo.png")
 
 const print = (facture) => {
 
+  const device = new escpos.USB(0x04b8, 0x0e28);
+  const options = {
+    encoding: "860",
+    width: 32
+
+  }
+  const printer = new escpos.Printer(device, options)
+
+
+
   //console.log("Printing...", facture)
 
   const calculateAge = (dateStr) => {
@@ -58,26 +62,20 @@ const print = (facture) => {
     return years
   }
 
-  const { analyses, patient, agent_facturation } = facture
+  const { analyses, patient, agent_facturation, exonerant } = facture
 
 
   escpos.Image.load(logo, function (image) {
     device.open(
 
       function () {
-        // printer
-        //   .font('a')
-        //   .align('ct')
-        //   .style('bu')
-        //   .size(1, 1)
-        //   .text("SENLABO");
 
         printer.align('ct')
           .image(image, 'd24')
 
         printer
           .control("LF")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('a')
           .size(0, 0)
@@ -85,16 +83,16 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('a')
           .size(0, 0)
-          .text("Site de: https://senlabodakar.com");
+          .text("Site: https://senlabodakar.com");
 
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('a')
           .size(0, 0)
@@ -102,7 +100,7 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('a')
           .size(0, 0)
@@ -110,15 +108,37 @@ const print = (facture) => {
 
         printer
           .control("LF")
-          .font('a')
-          .align('ct')
-          .style('bu')
-          .size(1, 1)
-          .text(`Facture N: ${facture.numero_facture}`);
+          .font('b')
+          .align("LT")
+
+          // .align('ct')
+          // .style('bu')
+          .size(1, size1)
+          // .text(`Facture N: ${facture.numero_facture}`)
+          .tableCustom([
+            { text: "N* Facture", align: 'LEFT', width: 0.5 },
+            { text: facture.numero_facture, align: 'RIGHT', width: 0.5 }
+          ]);
+
 
         printer
           .control("LF")
           .font('b')
+          .align("LT")
+
+          // .align('ct')
+          // .style('bu')
+          .size(1, size1)
+          // .text(`Facture N: ${facture.numero_facture}`)
+          .tableCustom([
+            { text: "CP:", align: 'LEFT' },
+            { text: patient?.numero_patient, align: 'RIGHT' }
+          ]);
+
+
+        printer
+          .control("LF")
+          .font('a')
           .align("LT")
           .style('a')
           .size(0, 0)
@@ -126,7 +146,7 @@ const print = (facture) => {
 
         printer
           .control("LF")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('b')
           .size(0, 0)
@@ -135,7 +155,7 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('b')
           .size(0, 0)
@@ -143,7 +163,7 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('b')
           .size(0, 0)
@@ -151,50 +171,48 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('b')
           .size(0, 0)
           .text(`Téléphone: ${patient?.telephone || ""}`);
 
-        printer
-          .control("CR")
-          .font('b')
-          .align("LT")
-          .style('b')
-          .size(0, 0)
-          .text(`Matricule: ${patient?.numero_patient}`);
+
+        // printer
+        //   .control("CR")
+        //   .font('a')
+        //   .align("LT")
+        //   .style('b')
+        //   .size(0, 0)
+        //   .text(`Matricule: ${patient?.numero_patient}`);
 
 
 
         analyses.map(item => {
           printer
             .control("LF")
+
           printer
-            .font('b')
+            .font('a')
             .align("LT")
-            .style('b')
-            .size(0, 0)
+            .size(size1, size1)
             .text(item.designation);
 
           printer
             .control("CR")
-            .font('b')
-            .style('a')
-            .size(0, 0).tableCustom([
-              { text: "Montant:", align: 'LEFT' },
-              { text: `${formatNumber(item.prix) || 0} F`, align: 'RIGHT' }
-            ]);
-
+            .align("RT")
+            .font("a")
+            .style('B')
+            .size(size1, size1)
+            .text(`Montant Payé = ${formatNumber(item.prix) || 0} F`.toUpperCase());
         });
 
 
-        printer
-          .control("LF")
+        printer.drawLine()
 
         printer
-          .control("CR")
-          .font('b')
+          .control("LF")
+          .font('a')
           .style('a')
           .size(0, 0).tableCustom([
             { text: "Total:", align: 'LEFT' },
@@ -203,7 +221,7 @@ const print = (facture) => {
 
         printer
           .control("CR")
-          .font('b')
+          .font('a')
           .style('a')
           .size(0, 0).tableCustom([
             { text: "Montant à payer:", align: 'LEFT' },
@@ -215,9 +233,9 @@ const print = (facture) => {
         if (facture?.montant_avance) {
           printer
             .control("CR")
-            .font('b')
+            .font('a')
             .style('a')
-            .size(0, 0).tableCustom([
+            .size(size1, size1).tableCustom([
               { text: "Montant avance:", align: 'LEFT' },
               { text: `${formatNumber(facture.montant_avance) || 0} F`, align: 'RIGHT' }
             ]);
@@ -225,9 +243,9 @@ const print = (facture) => {
           const restant_a_payer = facture.montant_a_payer - (facture?.montant_avance || 0)
           printer
             .control("CR")
-            .font('b')
+            .font('a')
             .style('a')
-            .size(0, 0).tableCustom([
+            .size(size1, size1).tableCustom([
               { text: "Restant à payer:", align: 'LEFT' },
               { text: `${formatNumber(restant_a_payer) || 0} F`, align: 'RIGHT' }
             ]);
@@ -238,33 +256,54 @@ const print = (facture) => {
 
         const montantNetStr = writtenNumber(facture.montant_a_payer || 0)
 
-        const montantText = `Est etablit la presente facture en date du ${dayjs(facture.created_at).format("D/MM/YYYY")} à ${montantNetStr} FCFA`
-
-
-        printer
-        .control("LF")
-        .font('b')
-        .align("LT")
-        .style('b')
-        .size(0, 0)
-        .text(montantText);
+        const montantText = `Est etablie la presente facture en date du ${dayjs(facture.created_at).format("D/MM/YYYY")} à ${montantNetStr} FCFA`
 
 
         printer
           .control("LF")
-          .font('b')
+          .font('a')
           .align("LT")
           .style('b')
-          .size(0, 0)
-          .text(`Prise en charge: ${facture.prise_en_charge ? 'Oui' : 'Non'}`);
+          .size(size1, size1)
+          .text(montantText);
 
+
+        if (facture.prise_en_charge) {
+          printer
+            .control("LF")
+            .font('a')
+            .align("CT")
+            .style('bu')
+            .size(size1, size1)
+            .text(`PATIENT PRISE EN CHARGE`);
+
+          const pecText = `${exonerant?.designation || ""} / ${exonerant?.taux} %`
+
+          printer
+            .control("CR")
+            .font('a')
+            .align("LT")
+            .style('b')
+            .size(size1, size1)
+            .text(pecText);
+        } else if (facture?.taux_reduction) {
+          const redText = `${"Reduction"}: ${facture?.taux_reduction} %`
+
+          printer
+            .control("LF")
+            .font('a')
+            .align("LT")
+            .style('b')
+            .size(size1, size1)
+            .text(redText);
+        }
 
         printer
-          .control("CR")
-          .font('b')
+          .control("LF")
+          .font('a')
           .align("LT")
           .style('b')
-          .size(0, 0)
+          .size(size1, size1)
           .text(`Agent de facturation: ${agent_facturation ?
             agent_facturation.firstName + " " + agent_facturation.lastName : ""}`);
 
@@ -278,14 +317,14 @@ const print = (facture) => {
           .size(1, 1)
           .text(`MERCI. BON RETABLISSEMENT !`);
 
-        printer
-          .control("LF")
-          .control("LF")
-          .font('b')
-          .align("CT")
-          .style('b')
-          .size(1, 1)
-          .text(` `);
+        // printer
+        //   .control("LF")
+        //   .control("LF")
+        //   .font('a')
+        //   .align("CT")
+        //   .style('b')
+        //   .size(1, 1)
+        //   .text(` `);
 
         printer.cut()
           .close();
