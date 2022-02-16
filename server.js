@@ -277,7 +277,7 @@ const print = (facture) => {
             .size(size1, size1)
             .text(`PATIENT PRISE EN CHARGE`);
 
-          const pecText = `${exonerant?.designation || ""} / ${exonerant?.taux} %`
+          const pecText = `${exonerant?.designation || ""} / ${facture?.taux_exoneration || exonerant?.taux} %`
 
           printer
             .control("CR")
