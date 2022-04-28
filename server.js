@@ -204,7 +204,7 @@ const print = (facture) => {
             .font("a")
             .style('B')
             .size(size1, size1)
-            .text(`Montant Payé = ${formatNumber(item.prix) || 0} F`.toUpperCase());
+            .text(`Montant Payé = ${formatNumber(facture.prise_en_charge ? item.prix_ipm : item.prix) || 0} F`.toUpperCase());
         });
 
 
