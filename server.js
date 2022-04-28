@@ -159,7 +159,7 @@ const print = (facture) => {
           .align("LT")
           .style('b')
           .size(0, 0)
-          .text(`Age: ${calculateAge(patient?.date_naissance) || ""} an(s)`);
+          .text(`Age: ${patient?.age || calculateAge(patient?.date_naissance) || ""} an(s)`);
 
         printer
           .control("CR")
@@ -254,7 +254,7 @@ const print = (facture) => {
 
 
 
-        const montantNetStr = writtenNumber(facture.montant_a_payer || 0)
+        const montantNetStr = writtenNumber(facture.montant || 0)
 
         const montantText = `Est etablie la presente facture en date du ${dayjs(facture.created_at).format("D/MM/YYYY")} à ${montantNetStr} FCFA`
 
