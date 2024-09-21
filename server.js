@@ -10,9 +10,7 @@ var app = require('express')()
 var http = require('http').Server(app)
 var cors = require('cors');
 const dayjs = require('dayjs');
-app.use(cors({
-  origin: '*',
-}));
+app.use(cors());
 app.use(bodyParser.json())
 
 const port = 3525;
@@ -43,12 +41,15 @@ const logo = path.join(__dirname, "logo.png")
 
 const print = (facture) => {
 
-  const device = new escpos.USB(0x04b8, 0x0e28);
+  const device = new escpos.USB(0x04b8, 0x0e27);
   const options = {
-    encoding: "860",
+    encoding: "GB18030",
     width: 32
 
   }
+
+
+  console.log("device is")
   const printer = new escpos.Printer(device, options)
 
 

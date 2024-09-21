@@ -24,7 +24,7 @@
     "nodemon": "^2.0.15"
   },
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon -e js server.js",
     "electron": "electron .",
     "pack": " electron-packager . printer --platform=win32 --arch=x64 --overwrite"
   }
