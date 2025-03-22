@@ -1,2 +1,4 @@
 node_modules
 printer-win32-x64
+dist
+release*
