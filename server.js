@@ -2,27 +2,65 @@
 const path = require('path')
 const escpos = require('escpos')
 escpos.USB = require('escpos-usb')
+const fs = require('fs');
 const writtenNumber = require('written-number');
 writtenNumber.defaults.lang = 'fr';
+const { app, dialog } = require('electron')
 
 var bodyParser = require('body-parser')
-var app = require('express')()
-var http = require('http').Server(app)
+var httpServer = require('express')()
+var http = require('http').Server(httpServer)
 var cors = require('cors');
 const dayjs = require('dayjs');
-app.use(cors({
-  origin: '*',
-}));
-app.use(bodyParser.json())
+httpServer.use(cors());
+httpServer.use(bodyParser.json())
 
 const port = 3525;
+const  filePath = path.join(app.getAppPath('exe'), 'config.json')
+
+
+console.log("config is", filePath);
+
+// return;
 
 const formatNumber = (val = 0) => val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");  //Intl.NumberFormat().format(parseInt(val))
 
 const size1 = (1 + 1 * 0.5)
 const size2 = (1 + 1 * 0.7)
 
-app.post('/print', (req, res) => {
+
+function getConfig() {
+  try {
+    const config = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' });
+    const jsonCOnfig = JSON.parse(config)
+
+    return jsonCOnfig;
+
+
+  } catch (error) {
+    if (app) {
+      dialog.showErrorBox("Error", "Erreur de chargement du fichier de config");
+    } else {
+      console.log(error);
+    }
+  }
+}
+
+
+const {VID, PID} = getConfig()
+
+const device = new escpos.USB(VID, PID);
+const options = {
+  encoding: "GB18030",
+  width: 32
+  
+}
+
+console.log("config is", filePath, getConfig())
+const printer = new escpos.Printer(device, options)
+
+
+httpServer.post('/print', (req, res) => {
 
   try {
     print(req.body)
@@ -35,6 +73,20 @@ app.post('/print', (req, res) => {
 
 });
 
+httpServer.get('/test', (req, res) => {
+
+  try {
+    test()
+    res.json(
+      { succes: true }
+    )
+  } catch (error) {
+    res.status(400).send({ status: false, error })
+    console.log("Errr", error)
+  }
+
+});
+
 http.listen(port, () => {
   console.log(`Printer: http://localhost:${port}`);
 });
@@ -42,16 +94,6 @@ http.listen(port, () => {
 const logo = path.join(__dirname, "logo.png")
 
 const print = (facture) => {
-
-  const device = new escpos.USB(0x04b8, 0x0e28);
-  const options = {
-    encoding: "860",
-    width: 32
-
-  }
-  const printer = new escpos.Printer(device, options)
-
-
 
   //console.log("Printing...", facture)
 
@@ -336,3 +378,57 @@ const print = (facture) => {
 
   console.log("PRINTING DONE")
 }
+
+
+const test = () => {
+
+
+
+  escpos.Image.load(logo, function (image) {
+    device.open(
+
+      function () {
+
+        printer.align('ct')
+          .image(image, 'd24')
+
+        printer
+          .control("LF")
+          .font('a')
+          .align("LT")
+          .style('a')
+          .size(0, 0)
+          .text("SUCCES!");
+
+
+        printer
+          .control("LF")
+          .control("LF")
+          .font('b')
+          .align("CT")
+          .style('b')
+          .size(1, 1)
+          .text(`MERCI. BON RETABLISSEMENT !`);
+
+        // printer
+        //   .control("LF")
+        //   .control("LF")
+        //   .font('a')
+        //   .align("CT")
+        //   .style('b')
+        //   .size(1, 1)
+        //   .text(` `);
+
+        printer.cut()
+          .close();
+      });
+
+  })
+
+
+
+  console.log("PRINTING DONE")
+}
+
+
+
